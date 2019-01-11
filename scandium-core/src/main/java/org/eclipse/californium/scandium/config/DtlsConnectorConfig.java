@@ -1705,6 +1705,8 @@ public final class DtlsConnectorConfig {
 					break;
 				case TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8:
 				case TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:
+				case TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:
+				case TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384:
 					verifyEcBasedCipherConfig(suite);
 					certifacte = true;
 					break;
@@ -1781,6 +1783,8 @@ public final class DtlsConnectorConfig {
 			if (certificates) {
 				ciphers.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 				ciphers.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
+				ciphers.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA);
+				ciphers.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384);
 			}
 
 			if (config.pskStore != null) {

@@ -264,15 +264,14 @@ public class CredentialsUtil {
 			config.setClientAuthenticationRequired(false);
 		}
 
-		if (x509 >= 0 || rpk >= 0 || x509Trust) {
-
+		if (x509 >= 0 || rpk >= 0) {
 			try {
 				// try to read certificates
 				SslContextUtil.Credentials serverCredentials = SslContextUtil.loadCredentials(
 						SslContextUtil.CLASSPATH_SCHEME + KEY_STORE_LOCATION, certificateAlias, KEY_STORE_PASSWORD,
 						KEY_STORE_PASSWORD);
 				if (!noAuth) {
-					if (x509Trust || x509 >= 0) {
+					if (x509 >= 0) {
 						Certificate[] trustedCertificates = SslContextUtil.loadTrustedCertificates(
 								SslContextUtil.CLASSPATH_SCHEME + TRUST_STORE_LOCATION, TRUST_NAME,
 								TRUST_STORE_PASSWORD);
@@ -317,7 +316,12 @@ public class CredentialsUtil {
 				}
 			}
 		}
-		if (!noAuth && rpkTrust) {
+		if (x509Trust) {
+			// trust all
+			config.setTrustStore(new Certificate[0]);
+		}
+		if (rpkTrust) {
+			// trust all
 			config.setRpkTrustAll();
 		}
 		if (psk && config.getIncompleteConfig().getSupportedCipherSuites() == null) {
@@ -325,6 +329,8 @@ public class CredentialsUtil {
 			if (x509 >= 0 || rpk >= 0 || x509Trust || rpkTrust) {
 				suites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8);
 				suites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256);
+				suites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA);
+				suites.add(CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384);
 			}
 			if (ecdhePsk) {
 				suites.add(CipherSuite.TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256);

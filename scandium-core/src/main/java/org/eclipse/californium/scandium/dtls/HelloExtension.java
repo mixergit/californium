@@ -244,7 +244,8 @@ public abstract class HelloExtension {
 		SESSION_TICKET_TLS(35, "SessionTicket TLS"),
 
 		/** See <a href="https://datatracker.ietf.org/doc/draft-ietf-tls-dtls-connection-id/">Draft dtls-connection-id</a> **/
-		CONNECTION_ID(255, "Connection ID"),
+		/** Current provisional value from go implementation **/
+		CONNECTION_ID(52, "Connection ID"),
 
 		/** See <a href="http://www.iana.org/go/rfc5746">RFC 5746</a> **/
 		RENEGOTIATION_INFO(65281, "renegotiation_info");

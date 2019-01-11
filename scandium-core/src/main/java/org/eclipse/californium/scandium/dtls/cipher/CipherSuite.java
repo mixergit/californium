@@ -56,9 +56,13 @@ public enum CipherSuite {
 	TLS_PSK_WITH_AES_128_CBC_SHA256(0x00AE, KeyExchangeAlgorithm.PSK, Cipher.AES_128_CBC, MACAlgorithm.HMAC_SHA256),
 	/**See <a href="https://tools.ietf.org/html/rfc5489#section-3.2">RFC 5489</a> for details*/
 	TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256(0xC037, KeyExchangeAlgorithm.ECDHE_PSK, Cipher.AES_128_CBC, MACAlgorithm.HMAC_SHA256),
+	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA(0xC00A, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_256_CBC, MACAlgorithm.HMAC_SHA1),
 	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256(0xC023, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_128_CBC, MACAlgorithm.HMAC_SHA256),
+	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384(0xC024, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_256_CBC, MACAlgorithm.HMAC_SHA384, PRFAlgorithm.TLS_PRF_SHA384),
 	TLS_PSK_WITH_AES_128_CCM_8(0xC0A8, KeyExchangeAlgorithm.PSK, Cipher.AES_128_CCM_8, MACAlgorithm.NULL),
-	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8(0xC0AE, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_128_CCM_8, MACAlgorithm.NULL);
+	TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8(0xC0AE, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_128_CCM_8, MACAlgorithm.NULL),
+	// currently not working!
+	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256(0xc02b, KeyExchangeAlgorithm.EC_DIFFIE_HELLMAN, Cipher.AES_128_GCM, MACAlgorithm.NULL);
 
 	// DTLS-specific constants ////////////////////////////////////////
 
@@ -241,8 +245,12 @@ public enum CipherSuite {
 	 * 
 	 * @return the function
 	 */
-	public PRFAlgorithm getPseudoRandomFunction() {
-		return pseudoRandomFunction;
+	public String getPseudoRandomFunctionMacName() {
+		return pseudoRandomFunction.getMacAlgorithm().getName();
+	}
+
+	public String getPseudoRandomFunctionHashName() {
+		return pseudoRandomFunction.getMacAlgorithm().getHashName();
 	}
 
 	/**
@@ -382,18 +390,20 @@ public enum CipherSuite {
 	 * See http://tools.ietf.org/html/rfc5246#appendix-A.6
 	 */
 	private enum MACAlgorithm {
-		NULL(null, 0),
-		HMAC_MD5("HmacMD5", 16),
-		HMAC_SHA1("HmacSHA1", 20),
-		HMAC_SHA256("HmacSHA256", 32),
-		HMAC_SHA384("HmacSHA384", 48),
-		HMAC_SHA512("HmacSHA512", 64);
+		NULL(null, null, 0),
+		HMAC_MD5("HmacMD5", "MD56",16),
+		HMAC_SHA1("HmacSHA1", "SHA-1", 20),
+		HMAC_SHA256("HmacSHA256", "SHA-256", 32),
+		HMAC_SHA384("HmacSHA384", "SHA-384", 48),
+		HMAC_SHA512("HmacSHA512", "SHA-512", 64);
 
-		private String name;
-		private int outputLength;
+		private final String name;
+		private final String hashName;
+		private final int outputLength;
 
-		private MACAlgorithm(String name, int outputLength) {
+		private MACAlgorithm(String name, String hashName, int outputLength) {
 			this.name = name;
+			this.hashName = hashName;
 			this.outputLength = outputLength;
 		}
 
@@ -410,6 +420,10 @@ public enum CipherSuite {
 		 */
 		public String getName() {
 			return name;
+		}
+
+		public String getHashName() {
+			return hashName;
 		}
 
 		/**
@@ -435,13 +449,14 @@ public enum CipherSuite {
 	}
 
 	private enum Cipher {
-		// key_length & record_iv_length as documented in RFC 5426, Appendic C
+		// key_length & record_iv_length as documented in RFC 5426, Appendix C
 		// see http://tools.ietf.org/html/rfc5246#appendix-C
 		NULL("NULL", CipherType.NULL, 0, 0, 0),
 		B_3DES_EDE_CBC("DESede/CBC/NoPadding", CipherType.BLOCK, 24, 4, 8), // don't know
 		AES_128_CBC("AES/CBC/NoPadding", CipherType.BLOCK, 16, 4, 16), // http://www.ietf.org/mail-archive/web/tls/current/msg08445.html
 		AES_256_CBC("AES/CBC/NoPadding", CipherType.BLOCK, 32, 4, 16),
-		AES_128_CCM_8("CCM", CipherType.AEAD, 16, 4, 8, 8); // explicit nonce (record IV) length = 8
+		AES_128_CCM_8("CCM", CipherType.AEAD, 16, 4, 8, 8), // explicit nonce (record IV) length = 8
+		AES_128_GCM("GCM", CipherType.AEAD, 16, 4, 8, 8); // currently not working!
 
 		/**
 		 * The <em>transformation</em> string of the corresponding Java Cryptography Architecture
@@ -524,7 +539,18 @@ public enum CipherSuite {
 	}
 
 	private enum PRFAlgorithm {
-		TLS_PRF_SHA256;
+		TLS_PRF_SHA256(MACAlgorithm.HMAC_SHA256),
+		TLS_PRF_SHA384(MACAlgorithm.HMAC_SHA384);
+
+		private MACAlgorithm mac;
+
+		private PRFAlgorithm(MACAlgorithm mac) {
+			this.mac = mac;
+		}
+		
+		public MACAlgorithm getMacAlgorithm() {
+			return mac;
+		}
 	}
 
 	/**

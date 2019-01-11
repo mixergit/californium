@@ -122,6 +122,7 @@ public class DtlsConnectorConfigTest {
 		List<CipherSuite> cipherSuites = config.getSupportedCipherSuites();
 		assertThat(cipherSuites, ListUtilsTest.containsAll(CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256,
 				CipherSuite.TLS_PSK_WITH_AES_128_CCM_8, CipherSuite.TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256,
+				CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
 				CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8));
 	}
 
